@@ -1,14 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import re
 from email.utils import parsedate
 from time import mktime
 from datetime import datetime
-from os import popen
 import os
+import sys
 from sys import argv,stderr,stdout
 import getopt
-
+import configparser
+import subprocess
 
 opts, args = getopt.getopt(argv[1:],None, ['svg'])
 needsvg = False
@@ -16,10 +17,12 @@ for o, a in opts:
     if o == "--svg":
         needsvg = True
 extfolder = False
+
 if len(args) == 1:
     extfolder = True
     targetfolder = args[0]
-
+else:
+    targetfolder = "."
 
 fc=0
 locs=0
@@ -29,9 +32,8 @@ excl=False
 
 h=[]
 
-import ConfigParser
 configfilename = os.path.join(targetfolder, ".gitlocrc")
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 with open("gitlocrc") as f:
     config.readfp(f)
 config.read([configfilename, os.path.expanduser('~/.gitlocrc')])
@@ -52,7 +54,8 @@ if extfolder:
 gitlogopts = '--no-color --date-order --reverse -p'
 gitcmd = 'git '+gitopts+' log '+gitlogopts
 
-for x in popen(gitcmd):
+for x in subprocess.Popen(gitcmd, stdout=subprocess.PIPE, shell = True).stdout:
+	x = x.decode('ISO-8859-1')
 	if x.startswith('commit'):
 		if not excl:
 			pop()
@@ -146,7 +149,7 @@ def makesvg():
 	svg.write("""<polyline points="%s" class="a" style="stroke:red"/>"""%(' '.join(ps),))
 
 
-		
+
 
 	svg.write("""</svg>\n""")
 
